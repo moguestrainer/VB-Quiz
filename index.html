@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>總整理2.pdf 隨機題庫測驗</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f0f4f8;
+            color: #1a202c;
+        }
+        
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 1rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+        }
+        .option-btn {
+            transition: all 0.2s ease-in-out;
+            border: 2px solid #e2e8f0;
+        }
+        .option-btn:hover:not(:disabled) {
+            border-color: #cbd5e1;
+            background-color: #f8fafc;
+            transform: translateY(-1px);
+        }
+        .option-btn.selected {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+        }
+        .option-btn.correct {
+            border-color: #10b981 !important;
+            background-color: #d1fae5 !important;
+            color: #065f46;
+        }
+        .option-btn.incorrect {
+            border-color: #ef4444 !important;
+            background-color: #fee2e2 !important;
+            color: #991b1b;
+        }
+        .fade-in {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <div class="glass-panel w-full max-w-3xl p-6 md:p-8">
+        <h1 class="text-2xl md:text-3xl font-bold text-center text-blue-900 mb-6">總整理2.pdf 隨機題庫測驗</h1>
+        
+        <div id="quiz-container" class="fade-in">
+            <div class="flex justify-between items-center mb-6 pb-4 border-b border-gray-200 text-sm md:text-base font-semibold text-gray-500">
+                <span id="question-progress" class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full">題目：1 / 20</span>
+                <span id="score-keeper" class="bg-green-100 text-green-800 px-3 py-1 rounded-full">得分：0</span>
+            </div>
+            
+            <div id="question-text" class="text-lg md:text-xl font-bold text-gray-800 mb-6 leading-relaxed">
+                載入中...
+            </div>
+            
+            <div id="options-container" class="space-y-3 mb-6">
+                <!-- Options injected via JS -->
+            </div>
+            
+            <div id="explanation-box" class="hidden bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg mb-6 fade-in">
+                <h3 class="font-bold text-blue-800 mb-1">詳解：</h3>
+                <p id="explanation-text" class="text-gray-700 leading-relaxed"></p>
+            </div>
+            
+            <div class="mt-8">
+                <button id="submit-btn" onclick="checkAnswer()" disabled class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg shadow-md transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed">
+                    確認答案
+                </button>
+                <button id="next-btn" onclick="nextQuestion()" class="hidden w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg shadow-md transition-colors">
+                    下一題
+                </button>
+            </div>
+        </div>
+
+        <div id="result-container" class="hidden text-center fade-in py-8">
+            <h2 class="text-3xl font-bold text-gray-800 mb-4">測驗結束！</h2>
+            <div class="text-6xl font-black text-blue-600 mb-2" id="final-score-number">0</div>
+            <p id="final-score-text" class="text-xl text-gray-600 mb-8">滿分 100 分</p>
+            <button onclick="startQuiz()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transition-transform transform hover:scale-105">
+                重新隨機抽題測驗
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // 根據「總整理2.pdf」建立的完整母群題庫 (共124題)
+        const rawQuestions = [
+            { question: "下列何者最能解釋「免疫螢光法」的優勢?", options: ["可直接觀察病毒基因序列", "可快速檢測病毒抗原並定位於細胞內", "可提供病毒分離株", "可區分活病毒與死病毒"], answer: 1, explanation: "免疫螢光法利用螢光標記抗體,能快速檢測病毒抗原,並顯示其在細胞內的分布位置,常用於臨床快速診斷。" },
+            { question: "為何「血清學檢測」在急性感染初期靈敏度較低?", options: ["因為抗體尚未大量產生", "因為病毒量太高干擾檢測", "因為血清中存在抑制因子", "因為檢測方法不夠靈敏"], answer: 0, explanation: "急性感染初期,宿主尚未產生足夠抗體,因此血清學檢測靈敏度低,需搭配抗原檢測或分子檢測。" },
+            { question: "在採集檢體時,何者最可能導致「假陰性」結果?", options: ["樣本於臨床症狀剛出現時採集", "樣本冷藏保存並於隔日送檢", "樣本於症狀出現數天後才採集", "樣本同時分送固定液與未固定液"], answer: 2, explanation: "病毒量通常在臨床症狀剛出現時最高,若檢體在症狀出現數天後才採集,病毒量可能不足,導致假陰性。" },
+            { question: "下列何種檢測方法最適合用於「區分感染動物與疫苗接種動物」(DIVA test)?", options: ["ELISA", "PCR", "病毒分離", "差異化血清學檢測"], answer: 3, explanation: "DIVA 測試仰賴特殊血清學方法,能區分自然感染與疫苗誘導的免疫反應。" },
+            { question: "下列何者最能解釋「次世代定序(NGS)」在病毒診斷上的價值?", options: ["可快速提供病毒抗原結構", "可同時檢多種病毒並分析基因變異", "可直接分離活病毒株", "可判斷病毒是否具傳染性"], answer: 1, explanation: "NGS 能同時檢測多種病毒,並分析基因序列變異,對新興病毒的監測與流行病學研究特別重要。" },
+            { question: "檢體想要進行病毒分離,可採用何種化學藥品來保存?", options: ["50%中性甘油生理鹽水", "10%中性福馬林液", "0.5%石炭酸", "2%福馬林液"], answer: 0, explanation: "病毒分離需要保留病毒活性;福馬林會固定/失活病毒,因此不能拿固定病材做病毒分離。" },
+            { question: "如要確診貓傳染性腹膜炎(FIP),下列何種方法最佳?", options: ["呼吸道細菌培養", "由腹水進行免疫螢光抗體染色,證明病毒存在於巨噬細胞內", "糞便進行病毒核酸診斷", "血液進行病毒分離"], answer: 1, explanation: "考點不只是『有沒有檢出病毒』,而是病毒是否存在於與病變/疾病機轉相符的位置。" },
+            { question: "下列何者不是臺灣現行家禽流行性感冒的防治策略?", options: ["家禽場應加強生物安全措施", "為減少損失,應確實使用家禽流行性感冒疫苗", "儘量以非開放式的禽舍飼養", "活禽可採喉頭及共洩腔拭子以RT-PCR 檢測"], answer: 3, explanation: "PCR是高靈敏度核酸檢測,但正確採檢仍不可被PCR取代。" },
+            { question: "某養雞場懷疑罹患腫頭症候群,須做病毒分離及分子生物學確診,最適合的送檢病材為何?", options: ["氣管", "肝臟", "脾臟", "皮膚"], answer: 0, explanation: "right site概念,檢體一定要依臨床症狀和病原的致病機轉選擇。" },
+            { question: "下列何種疾病無法用血球凝集抑制試驗(HI)來檢測其抗體力價?", options: ["雞產蛋下降症候群", "家禽流行性感冒", "新城病", "腫頭症候群"], answer: 3, explanation: "腫頭症候群與 aMPV 感染有關,不像禽流感或 NDV 具有適合HI 使用的血球凝集特性。" },
+            { question: "一頭小牛腹瀉,畜主第4天才採糞便送驗,輪狀病毒抗原檢測為陰性。最可能的原因是:", options: ["採樣太晚:輪狀病毒在症狀出現48小時後常已測不到", "應該改採全血檢驗", "輪狀病毒不會經糞便排出", "糞便檢體應先冷凍"], answer: 0, explanation: "rotavirus 在症狀出現48小時後可能就測不到。" },
+            { question: "採未吸吮初乳前的小牛血液測到 Akabane 病毒抗體。最合理的解讀是:", options: ["母源抗體", "疫苗接種", "小牛在子宮內曾感染 Akabane 病毒", "偽陽性"], answer: 2, explanation: "多數家畜的免疫球蛋白不會經胎盤傳遞,吸吮初乳前測到代表胎兒自己產生了抗體。" },
+            { question: "關於病毒檢體的處理與運送,下列何者正確?", options: ["直接使用細菌培養基", "所有檢體冷凍運送", "病灶組織全部福馬林固定", "病灶組織應分成兩份:一份固定,一份不固定"], answer: 1, explanation: "福馬林會導致病毒死亡，檢體若需病毒分離常需低溫或冷凍運送。" },
+            { question: "若實驗室欲進一步以細胞培養分離並增殖狂犬病病毒,應於何種等級的實驗室進行?", options: ["BSL-1", "BSL-2", "BSL-3", "BSL-4"], answer: 2, explanation: "狂犬病病毒屬RG3,對應BSL-3。" },
+            { question: "呈上題,若僅需以 direct FA 確認腦組織中的病毒抗原,下列敘述何者最正確?", options: ["皆可在BSL-1進行", "採樣與組織處理仍具氣膠風險,須依規範執行", "需使用福馬林固定切片", "一律須於BSL-4處理"], answer: 1, explanation: "防護等級應與實際操作的風險相稱,處理腦組織仍可能產生氣膠。" },
+            
+            { question: "關於伊波拉病毒與藍舌病病毒引起出血熱的病理機轉,下列何者正確?", options: ["主要是嗜中性球分泌組織胺破壞基底膜所致", "受感染的巨噬細胞與樹突細胞會分泌TNF等血管活化介質,加劇血管損傷與DIC", "漿細胞大量分泌抗體沉積是主因", "內皮細胞受損主要引起全身性高血壓"], answer: 1, explanation: "核心介質為巨噬細胞/樹突細胞分泌的TNF等血管活化介質,導致血管損傷後可見出血與水腫。" },
+            { question: "關於病毒感染引發細胞病變效應(CPE)及特殊細胞改變,何者錯誤?", options: ["具膜病毒可促成多核合胞體形成", "Negri bodies 屬於細胞內的包涵體", "細胞凋亡的外源性途徑是經由粒線體損傷釋放cytochrome c來活化 caspase", "血細胞吸附與血凝在臨床診斷上有用"], answer: 2, explanation: "經由「粒線體損傷」的是內源性途徑;外源性途徑是由TNF/Fas或CTL 活化 death domain。" },
+            { question: "關於培養細胞時需要用到的medium,何者敘述正確?", options: ["清明淡黃色是正常的", "清明紅紫色是正常的", "變成清明黃色的原因是pH值太低,可能是二氧化碳濃度太高", "變成清明紅紫色的原因是有黴菌污染"], answer: 2, explanation: "Medium 清澈不混濁即無細菌污染;變淡黃色是因為pH值太低(二氧化碳濃度高),變紅紫色是pH值太高。" },
+            { question: "下列關於 immunofluorescence 的敘述何者正確?", options: ["藉由 enzyme activity 去作用", "通常使用福馬林固定的組織切片", "螢光蛋白會被植入DNA中", "此技術是為了標記目標抗原而產生的方法"], answer: 3, explanation: "螢光染料標記於抗體上,藉由抗原-抗體專一性結合偵測目標抗原;福馬林固定通常不適合IF。" },
+            { question: "下列何者是一般最常用的人類免疫不全病毒感染的確認診斷?", options: ["顆粒凝集法", "酵素免疫分析法", "西方墨點法", "紅血球凝集反應法"], answer: 2, explanation: "Western blot (西方墨點法)傳統上作為HIV抗體初步篩檢陽性後的確認試驗,特異性較高。" },
+            { question: "下列有關病毒檢驗之敘述,何者錯誤?", options: ["產生CPE可推測有病毒存在", "細胞被病毒感染後,會被lyse,才能做病毒之 plaque assay", "有套膜的病毒才能做 HI assay", "補體固定試驗可用來分析抗體"], answer: 1, explanation: "Plaque assay 不一定要靠細胞完全裂解(lyse);只要病毒造成局部細胞死亡或脫落,就可能形成 plaque。" },
+            { question: "口蹄疫病毒O TAIWAN 97會感染下列何種動物?", options: ["僅感染牛及羊", "僅感染羊及豬", "僅感染豬", "牛、羊及豬均會感染"], answer: 2, explanation: "O TAIWAN 97 為台灣1997年流行株,具豬專一性;另一種O TAIWAN 99 則對豬、牛、羊皆有感染性。" },
+            { question: "下列哪個病毒是經由神經入侵?", options: ["疱疹病毒(及狂犬病病毒)", "乳頭瘤病毒", "麻疹病毒", "腺病毒"], answer: 0, explanation: "狂犬病與疱疹病毒皆具備神經入侵與潛伏的特性。" },
+            { question: "下列哪個病毒可以通過胎盤感染胎兒?", options: ["狂犬病病毒", "乳頭瘤病毒", "黃病毒", "貓細小病毒"], answer: 3, explanation: "母貓懷孕期感染貓細小病毒時,病毒會透過胎盤傳給胎兒,導致流產、死胎或小腦發育不全。" },
+            { question: "有關狂犬病毒的敘述,下列何者錯誤?", options: ["存在於唾液,藉咬傷傳播", "沿神經細胞入侵中樞神經系統", "哺乳類動物、鳥類及蝙蝠等都容易被感染發病", "感染後若無治療易引發腦炎"], answer: 2, explanation: "狂犬病專屬於溫血哺乳類動物。鳥類在自然狀態下具高度抵抗力,幾乎不會感染發病。" },
+            { question: "腺病毒較不可能造成下列何類疾病?", options: ["出血性膀胱炎", "呼吸道感染", "帶狀疱疹", "紅眼症"], answer: 2, explanation: "帶狀疱疹(皮蛇)是由「水痘帶狀疱疹病毒(VZV)」引起,與腺病毒無關。" },
+            { question: "有關登革病毒初次感染之臨床檢驗,下列何者正確?", options: ["NS-1 Ag可在呼吸道檢體測得", "IgG 為急性期感染指標", "感染14天內,血液檢體可測得IgM", "單一快篩陰性即可排除感染"], answer: 2, explanation: "IgM 通常在發病後第14天左右達到高峰,是初次感染極具診斷價值的急性期指標。" },
+            { question: "針對病毒檢驗室生物安全等級(BSL),何者錯誤?", options: ["BSL-2 適用於中等致病性病原", "高病原且透過氣膠傳播通常需BSL-4", "BSL等級純粹由病毒大小決定", "產生大量氣膠風險操作需用生物安全櫃"], answer: 2, explanation: "BSL 劃分是根據致病性、傳染途徑及預防手段綜合評估,與「病毒大小」無絕對關係。" },
+            { question: "抗病毒藥物 Zidovudine (AZT)的主要作用標的?", options: ["胸苷激酶", "逆轉錄酶", "DNA聚合酶", "神經胺酸酶"], answer: 1, explanation: "AZT可競爭性抑制逆轉錄病毒(如HIV/FIV)的逆轉錄酶,導致病毒DNA 鏈延伸中斷。" },
+            { question: "若要鑑定未知或無法培養的病毒,下列何種方法最適合?", options: ["次世代定序(NGS)", "血球計數", "革蘭氏染色", "尿液試紙"], answer: 0, explanation: "次世代定序可直接分析檢體中的核酸,適合發現未知或無法培養的病毒。" },
+            
+            { question: "下列哪一科病毒屬於具分節基因體之負股RNA病毒,其基因體可分為6、7或8個節段?", options: ["副黏液病毒科", "正黏液病毒科", "沙粒病毒科", "布尼亞病毒科"], answer: 1, explanation: "正黏液病毒科(如流感病毒)具有分節的負股RNA基因體。" },
+            { question: "細小病毒(Parvovirus)的衣殼由多少個相同的蛋白次單元組成?其對稱型式為何?", options: ["180個;螺旋對稱", "60個;二十面體對稱", "60個;螺旋對稱", "12個;二十面體對稱"], answer: 1, explanation: "細小病毒衣殼由60個相同的蛋白次單元組成,屬於二十面體對稱。" },
+            { question: "下列何者可採用全場疫苗接種、DIVA篩選及淘汰策略,達到全場清淨?", options: ["豬生殖與呼吸綜合症", "第二型豬環狀病毒", "豬小病毒", "豬假性狂犬病"], answer: 3, explanation: "根除豬假性狂犬病廣泛使用gE 基因缺失疫苗配合 ELISA 檢測抗gE抗體,以區分自然感染與疫苗接種豬隻並加以淘汰。" },
+            { question: "下列何種動物非日本腦炎病毒之最終宿主 (dead-end host)?", options: ["馬", "豬", "牛", "山羊"], answer: 1, explanation: "豬隻是日本腦炎最重要的「增幅宿主(Amplifying host)」,能產生極高濃度的病毒血症供病媒蚊傳播。馬、牛、人等則是最終宿主。" },
+            { question: "病毒感染宿主細胞進行複製(lytic cycle)時,六個階段的正確順序為何?", options: ["附著→脫外套→穿透→複製→集合→釋放", "附著→穿透→脫外套→複製→集合→釋放", "穿透→附著→脫外套→複製→釋放→集合", "附著→穿透→複製→脫外套→集合→釋放"], answer: 1, explanation: "典型的六個階段依序為:附著(attachment)、穿透(penetration)、脫殼(uncoating)、複製(replication)、集合(assembly)、釋放(release)。" },
+            { question: "下列哪一個病毒科,因具有脂質包膜(lipid envelope),可被有機溶劑破壞而失去感染力?", options: ["細小病毒科", "小RNA病毒科", "皰疹病毒科", "呼腸孤病毒科"], answer: 2, explanation: "皰疹病毒具有厚重的脂質包膜,極易被酒精、乙醚或清潔劑破壞而失去感染力;其他三者皆為無包膜病毒,對有機溶劑具抵抗力。" },
+            { question: "下列何種病毒感染,在臨床上常可見到特異性的細胞核內包涵體(Intranuclear inclusion bodies)?", options: ["豬瘟病毒", "豬環狀病毒", "豬細小病毒", "假性狂犬病病毒"], answer: 3, explanation: "假性狂犬病病毒屬於疱疹病毒科,其複製與組裝在細胞核內進行,常觀察到特異性的嗜酸性細胞核內包涵體(Cowdry A型)。" },
+            { question: "新冠病毒感染人類細胞後,會分別在哪裡複製其核酸及表現其病毒蛋白?", options: ["病毒核酸複製及病毒蛋白轉譯都在細胞質內進行", "在細胞核內複製其核酸,並在內質網內表現病毒蛋白", "都在細胞核內進行", "在細胞質內複製核酸,在細胞核內表現蛋白"], answer: 0, explanation: "新冠病毒為單股正鏈RNA病毒,感染細胞後,於細胞質進行RNA複製,蛋白質轉譯也在細胞質內進行。" },
+            { question: "下列有關新城病之敘述何者正確?", options: ["病毒只有1種血清型", "病毒具有H與N兩種獨立的蛋白質", "不是人畜共通傳染病", "已在臺灣絕跡"], answer: 0, explanation: "新城病由副黏液病毒科的ND 病毒引起,血清型為PMV-1,僅有1種血清型;其具有的是HN蛋白,且人類感染可能造成結膜炎。" },
+            { question: "關於病毒遺傳物質及分類之敘述何者有誤?", options: ["正股單股RNA病毒進入細胞後可直接與宿主核糖體結合進行轉譯", "H1N1流感病毒遺傳物質會作為mRNA的模板製造出mRNA", "醫用酒精只能殺死不具有套膜保護的病毒", "有套膜病毒的脂質包膜來源為穿過宿主細胞膜系統而來"], answer: 2, explanation: "酒精能溶解脂質套膜,因此對「具備」脂質套膜的病毒有效;無套膜病毒反而對酒精具有極高的抵抗力。" },
+            { question: "下列為病毒生活史的基本步驟,請依照感染步驟依序加以排列:I:釋放 II:穿透 III:基因體的複製及蛋白質的產生 IV:組裝V:吸附 VI:去蛋白衣", options: ["V→II→IV→I→III", "VI→II→III→IV→I→V", "II→VI→V→III→IV→I", "V→II→VI→III→IV→I"], answer: 3, explanation: "依序為吸附(V)→穿透(II)→去蛋白衣(VI)→基因體複製及產生蛋白(III)→組裝(IV)→釋放(I)。" },
+            { question: "在病毒感染宿主細胞的過程中,決定病毒能夠感染哪一種特定宿主及細胞類型的關鍵步驟為何?", options: ["吸附", "穿透", "複製", "釋放"], answer: 0, explanation: "「吸附」步驟決定了病毒能結合哪些特定組織或物種的受體,是決定宿主範圍與組織嗜性的關鍵第一步。" },
+            { question: "某病毒感染細胞後,顯微鏡下看到大量細胞融合形成多核細胞(syncytia),這種現象屬於:", options: ["Hemadsorption", "Inclusion body", "Cytopathic effect (CPE)", "Tropism"], answer: 2, explanation: "細胞病變效應(CPE)是指病毒感染後導致細胞形態異常,包含細胞圓縮、形成包涵體或多核細胞融合。" },
+            
+            { question: "關於病毒的複製機制與「蝕沒期(Eclipse period)」之敘述,下列何者正確?", options: ["病毒複製方式為二分裂", "蝕沒期是指病毒顆粒進入宿主細胞後,到第一個新病毒顆粒產生之前的這段時間", "在蝕沒期期間可觀察到大量感染性子代", "蝕沒期內破壞細胞會釋出更多成熟病毒"], answer: 1, explanation: "病毒進入宿主細胞拆解後,完整的感染性顆粒暫時不存在,直到第一個新子代組裝完成,此期間稱為「蝕沒期」。" },
+            { question: "下列何者在豬隻會引起間質性肺炎,且主要感染肺泡巨噬細胞?", options: ["Streptococcus suis type II", "豬繁殖與呼吸道症候群病毒(PRRSV)", "Actinobacillus pleuropneumoniae", "Mycoplasma hyopneumoniae"], answer: 1, explanation: "PRRSV 屬於動脈病毒科,主要標的細胞為肺泡巨噬細胞(PAMs),典型病變為間質性肺炎與繁殖障礙。" },
+            { question: "早期反芻動物細胞培養株遭受牛病毒性下痢病毒(BVDV)污染的主要途徑為何?", options: ["初代猴腎細胞", "胎牛血清(FBS)", "雞胚尿囊液", "節肢動物叮咬"], answer: 1, explanation: "主要原因係使用了受污染的胎牛血清(FBS)作為細胞培養基的補充物。" },
+            { question: "小RNA 病毒科基因體 5'端缺乏帽結構(5'cap),其宿主核糖體主要依靠下列何者進行非加帽依賴型轉譯?", options: ["內部核醣體進入位點(IRES)", "聚腺苷酸尾", "末端反向重複序列", "長末端重複序列"], answer: 0, explanation: "小RNA病毒基因體宿主核糖體係透過結合其基因體上的IRES(內部核醣體進入位點)來啟動轉譯。" },
+            { question: "關於病毒在宿主體內擴散的機制,當病毒從初次複製部位進入血液循環,並經由血行播散至全身目標器官(如肝、脾、皮膚)的過程,稱之為:", options: ["局部感染(Localized infection)", "第一次與第二次病毒血症(Primary and Secondary viremia)", "慢性潛伏(Chronic latency)", "逆行性神經運輸(Retrograde axonal transport)"], answer: 1, explanation: "病毒侵入體內後,先在局部門戶初次複製並進入血液,稱為第一次病毒血症;隨後病毒隨血流抵達主要標的器官大量增殖,再次釋放至血液中,稱為第二次病毒血症。" },
+            { question: "細小病毒科(Parvoviridae) 需要依賴宿主細胞處於下列哪一個細胞週期階段才能順利進行DNA複製?", options: ["G0期", "G1期", "S期", "M期"], answer: 2, explanation: "細小病毒因為基因組極小,無法自行複製DNA,完全仰賴宿主細胞進入DNA複製期(S期)時產生的DNA聚合酶來進行病毒基因體複製。" },
+            { question: "成年小白鼠腦內接種淋巴性脈絡膜腦膜炎病毒(LCMV)所引起的致死性腦膜炎,其主要致病機制為何?", options: ["病毒直接造成大量神經細胞溶解壞死", "宿主細胞毒性T淋巴球(CTL)對受感染細胞發動免疫攻擊", "病毒產生大量毒素致死", "補體過度活化導致血管內凝血"], answer: 1, explanation: "LCMV本身對神經細胞不具直接溶細胞毒性。宿主產生細胞毒性T淋巴細胞(CTL)攻擊帶有病毒抗原的神經細胞,這種過度的免疫反應才是致死主因。" },
+            { question: "下列何種病毒感染母畜後,主要經由胎盤穿透而引起胎兒流產、木乃伊化或先天性畸型(垂直傳播)?", options: ["狂犬病病毒", "豬細小病毒(Porcine parvovirus)", "狂犬病抗體", "犬副流感病毒"], answer: 1, explanation: "豬細小病毒對快速分裂的細胞具有極高嗜性,母豬感染後,病毒可透過胎盤穿透至胎兒體內,造成胎兒死亡、木乃伊化或流產。" },
+            { question: "某些大型DNA病毒能合成干擾宿主細胞激素作用的蛋白,藉以減弱宿主防禦反應,這類病毒編碼的蛋白統稱?", options: ["病毒激素(Virokines)", "凝集素(Lectins)", "干擾素(Interferons)", "溶菌酶(Lysozymes)"], answer: 0, explanation: "大型 DNA 病毒能編碼出宿主細胞激素或受體的蛋白質,稱為Virokines 或 Viroreceptors,中和宿主的發炎反應與免疫防禦。" },
+            { question: "狂犬病病毒與假性狂犬病病毒侵入宿主後,主要利用何種途徑向心性傳播至中樞神經系統(CNS)?", options: ["淋巴管液流", "周邊神經元之軸突運輸(Axonal transport)", "紅血球攜帶", "腦脊髓液被動流動"], answer: 1, explanation: "狂犬病病毒與PRV在傷口或肌肉複製後,會結合至神經肌肉接合處受體,利用微管蛋白系統進行逆行性軸突運輸,向心傳播至脊髓與大腦。" },
+            { question: "下列何者是病毒複製循環的第一步?", options: ["吸附(attachment)", "潛伏期(eclipse period)", "釋放(release)", "以上皆非"], answer: 0, explanation: "病毒複製循環的第一步為吸附(attachment)。" },
+            { question: "目前在臺灣流行的新城病病毒主要為那一基因型?", options: ["I", "III", "V", "VII"], answer: 3, explanation: "自1990年代起,基因VII型新城病病毒逐漸成為亞洲及全球多國(包含臺灣)主要流行的野毒株,對家禽具高度致病性。" },
+            { question: "關於病毒在宿主體內的感染、擴散與發病機制,下列敘述何者最為正確?", options: ["引起強烈 CPE的病毒在動物體內必定造成嚴重疾病", "痘樣病毒感染小鼠直接透過神經軸突傳入中樞神經系統", "病毒在血液中可以游離形式存在,也可以細胞相關形式存在", "病毒自腔面釋出會直接引發全身性病毒血症"], answer: 2, explanation: "病毒血症形式分為游離型與細胞相關型。白血球相關者如犬瘟熱病毒,紅血球相關者如非洲豬瘟病毒,有助於延長血症及蟲媒傳播。" },
+            
+            { question: "下列哪一種病毒「不會」合成一種RNAs,阻礙 initiation factor-2 (eIF-2)的磷化作用,導致減弱或阻止病毒干擾蛋白素的功能?", options: ["人類免疫缺乏病毒(HIV)", "人類單純疱疹病毒(HSV)", "第四型人類皰疹病毒(EBV)", "腺病毒(adenovirus)"], answer: 1, explanation: "人類單純疱疹病毒(HSV)不會利用此機制。" },
+            { question: "關於 Picornavirus (小RNA病毒科)的敘述,下列何者正確?", options: ["是具有包膜的雙股RNA病毒", "基因體為單股正鏈RNA (+ssRNA)", "主要以DNA作為遺傳物質", "必須利用反轉錄酶才能進行RNA複製"], answer: 1, explanation: "基因體是單股正鏈RNA,進入宿主細胞後,可以直接被核糖體利用來製造病毒蛋白質。" },
+            { question: "關於犬瘟熱病毒(CDV)之組織嗜性與細胞受體之敘述,下列何者正確?", options: ["表面之血球凝集素主要結合至免疫細胞表面的SLAM受體以及上皮細胞表面的Nectin-4受體", "主要結合CD4受體", "僅能感染呼吸道上皮細胞", "由核衣殼蛋白決定且不需特定受體"], answer: 0, explanation: "CDV利用SLAM 感染淋巴與免疫系統造成免疫抑制,隨後透過Nectin-4 感染上皮及神經組織,決定了其雙相的組織嗜性。" },
+            { question: "豬繁殖與呼吸綜合症病毒(PRRSV)在感染豬隻時,造成長期且持續性病毒血症的主要致病機制為何?", options: ["基因體永久整合至染色體中", "結合至紅血球表面", "高度專一性感染單核球與肺泡巨噬細胞,在體內低水平持續複製並干擾宿主免疫調節", "破壞胸腺使淋巴球凋亡"], answer: 2, explanation: "PRRSV會選擇性感染巨噬細胞,並透過多種機制(如抑制先天免疫反應)在體內造成漫長且難以根除的病毒血症。" },
+            { question: "下列何者最能解釋為什麼相同病毒感染不同宿主時,可能造成不同程度的疾病?", options: ["病毒的核酸種類決定疾病嚴重度", "宿主因素會影響病毒複製、免疫反應及組織損傷", "所有病毒感染都會造成相同的組織損傷", "病毒只有在進入血液後才具有致病性"], answer: 1, explanation: "宿主因素(年齡、免疫狀態及防禦機制)會影響病毒的複製以及宿主的免疫反應,進而影響疾病嚴重程度。" },
+            { question: "某病毒感染呼吸道上皮細胞後,先在局部複製,之後進入血液並到達另一個器官造成損傷。最符合此病毒的致病過程為何?", options: ["局部複製 → 病毒擴散→標的器官感染→ 組織損傷", "組織損傷 → 局部複製 → 病毒進入宿主→ 病毒擴散", "病毒擴散 → 宿主感染 → 組織損傷 → 局部複製", "標的器官感染 → 局部複製 → 病毒擴散"], answer: 0, explanation: "先局部複製後經血液擴散至標的器官造成組織損傷。" },
+            { question: "下列敘述何者正確?", options: ["Localized infection 一定代表疾病很輕微", "只有 systemic infection 才可能造成死亡", "即使病毒感染侷限於 epithelial surface,也可能造成嚴重甚至致死性疾病", "病毒只要沒有產生viremia,就不具有 virulence"], answer: 2, explanation: "restriction to an epithelial surface 不等於 lack of virulence。例如腸道黏膜的局部感染仍可能造成嚴重腹瀉。" },
+            { question: "吸入的粒子大小會影響其進入 respiratory tract 的深度。下列何者正確?", options: [">10 µm 的粒子最容易直接進入 alveoli", "<5µm 的粒子只能停留在 nasal cavity", "<5µm 的粒子可以深入 alveoli", "粒子大小與進入深度無關"], answer: 2, explanation: "大於10µm 的粒子較容易被 nasal cavity 的 mucociliary blanket 捕捉;小於5µm的粒子則可能直接進入肺泡。" },
+            { question: "多系統性擴散(Multisystemic Spread)的優勢為:(原題多選，此為綜合選項)", options: ["病毒可到達更多可參與排毒的體表部位", "免疫系統干擾感染的機會較少", "複製面積遠大於局部感染", "以上 (A) 與 (C) 皆是"], answer: 3, explanation: "多系統性擴散能使病毒到達更多可參與排毒的體表部位，並且複製面積遠大於局部感染。" },
+            { question: "關於犬瘟熱病毒(Canine Distemper Virus),下列哪些敘述是錯誤的?(原題多選，此為綜合選項)", options: ["無法跨物種傳播,只會感染犬類", "在犬甲狀腺內複製", "主要經由糞口途徑傳播", "以上皆是(敘述皆錯)"], answer: 3, explanation: "CDV可感染雪貂、浣熊等多種哺乳動物;經由呼吸道淋巴組織複製;主要透過氣溶膠傳播。" },
+            { question: "有關輪狀病毒(rotavirus)和諾羅病毒(norovirus)之比較,下列敘述何者錯誤?", options: ["輪狀病毒好發於嬰幼兒,諾羅病毒好發於所有年齡層", "輪狀病毒有疫苗預防,諾羅病毒則無", "輪狀病毒會產生腸毒素,諾羅病毒機轉尚不清楚", "兩者傳染途徑均屬糞口傳染"], answer: 2, explanation: "諾羅病毒的致病機轉已研究清楚,主要感染腸道細胞導致絨毛萎縮、延遲胃排空等引起腹瀉和嘔吐。" },
+            
+            { question: "有關豬瘟之敘述,何者錯誤?", options: ["大部分豬瘟病毒株在細胞培養時均不會產生 CPE", "巨噬細胞對豬瘟病毒不具感受性", "可造成淋巴細胞減少症", "受豬瘟病毒感染細胞較能對抗細胞凋亡過程"], answer: 1, explanation: "巨噬細胞可成為病毒複製與擴散的重要細胞,某些病毒能在巨噬細胞大量複製,進而提高 viremia。" },
+            { question: "許多病毒(例如巨細胞病毒 CMV或單純疱疹病毒HSV)具有抑制宿主細胞 MHC class I分子表現或運送的機制,其主要的生物學意義為何?", options: ["阻止抗原呈獻給CD8+細胞毒殺性T細胞,從而逃避細胞媒介免疫的清除", "促進宿主B細胞大量製造非專一性抗體,藉此干擾補體系統", "大量活化調節性T細胞(Treg),以全面誘導宿主產生免疫耐受", "誘導自然殺手細胞(NK cells)表面受體產生變異"], answer: 0, explanation: "當細胞表面缺乏 MHC class I時,CD8+T細胞就如同失去「雷達」,無法偵測到細胞內部已經被病毒感染,病毒便能成功逃避免疫系統的清除。" },
+            { question: "下列何種病毒感染可造成鄰近細胞連接起來,形成融合細胞或大的多核巨細胞的細胞病變?", options: ["Adenovirus", "Rotavirus", "Parainfluenza virus", "Poliovirus"], answer: 2, explanation: "Parainfluenza virus 表面具有融合蛋白(Fprotein),能夠促使宿主細胞膜與鄰近細胞膜融合,形成特徵性的多核巨細胞(syncytia)。" },
+            { question: "小鼠50%致死劑量(50% mouse lethal dose, MLD50),是用於描述病原的何種因子?", options: ["感染力(infectivity)", "毒力(virulence)", "侵犯力(invasiveness)", "病原性(pathogenicity)"], answer: 1, explanation: "毒力(virulence)是病原性的相對或定量指標,用來比較不同病毒株造成疾病或死亡的能力。" },
+            { question: "牛傳染性鼻氣管炎病毒在下列那一部位潛伏感染?", options: ["氣管", "肺臟", "神經結", "肝臟"], answer: 2, explanation: "牛傳染性鼻氣管炎病毒為牛疱疹病毒第1型(BoHV-1)。病毒感染後可潛伏在神經節內,當牛隻受到壓力或免疫抑制時可能再活化。" },
+            { question: "豬隻自然感染非洲豬瘟病毒時,其潛伏期約為幾天?", options: ["小於2天", "4~19天", "25~35天", "大於45天"], answer: 1, explanation: "非洲豬瘟(19天)>豬瘟(14天)> 口蹄疫(5天)。" },
+            { question: "關於病毒持續性感染(Persistent infection)的致病機制,下列敘述何者錯誤?", options: ["某些持續性感染病毒會透過調控或抑制宿主的細胞凋亡機制,使受感染細胞得以長期存活並持續製造病毒。", "持續性感染的病毒通常會高度表現其表面抗原,藉此強力刺激宿主的細胞毒殺性T細胞(CD8+ T cells)將其迅速全數清除。", "潛伏感染屬於持續性感染的一種,其特點是在非活化期間幾乎不表現完整病毒蛋白。", "持續性感染可能導致宿主長期帶原,並在特定環境壓力或免疫力低下時再度活化引發疾病。"], answer: 1, explanation: "持續性感染病毒之所以能長期存在,往往是因為它們會「低度表現」或「調控」其抗原,避免被CD8+T細胞過度攻擊。若強力表現抗原反而會立刻被免疫系統消滅。" },
+            { question: "細小病毒(Parvoviruses)複製時高度依賴宿主細胞的特定細胞週期,其主要在何種時期進行複製?", options: ["GO 靜止期", "G1期早期", "M期中期", "S期晚期"], answer: 3, explanation: "S期晚期是細胞DNA複製最活躍的時期,提供細小病毒複製所需的所有關鍵宿主酵素。" },
+            
+            { question: "在反芻動物中,哪一種揮發性脂肪酸最重要,可作為葡萄糖新生的原料?", options: ["Acetate", "Propionate", "Butyrate", "Lactate"], answer: 1, explanation: "丙酸(Propionate)是反芻動物肝臟進行糖質新生最重要的前驅物。" },
+            { question: "某隻犬罹患糖尿病,其高血糖最主要原因為何?", options: ["葡萄糖過度進入細胞", "肝醣大量合成", "細胞無法有效利用葡萄糖", "腎臟排出過多糖分"], answer: 2, explanation: "胰島素不足時,細胞吸收葡萄糖能力下降,肝臟卻持續製造葡萄糖造成高血糖。" },
+            { question: "下列哪種組織最依賴葡萄糖作為能量來源?", options: ["紅血球", "脂肪組織", "骨骼肌", "肝臟"], answer: 0, explanation: "紅血球沒有粒線體,因此無法進行TCA cycle 與氧化磷酸化,只能依賴糖解作用取得ATP。" },
+            { question: "一隻8歲已絕育母犬因多渴、多尿、多食但體重下降就診。檢驗結果:血糖 420 mg/dL、尿糖(+)、酮體(+),則最主要的病理機制為何?", options: ["肝臟無法分解肝醣", "胰島素不足導致細胞無法攝取葡萄糖", "葡萄糖吸收過度增加", "甲狀腺素分泌下降"], answer: 1, explanation: "缺乏胰島素時,肌肉無法攝取葡萄糖,脂肪組織無法利用葡萄糖,讓身體誤以為處於飢餓狀態。" },
+            { question: "有關腸腔中醣類吸收的敘述,下列何者正確?", options: ["胰島素可刺激大量葡萄糖進入腸上皮細胞", "蔗糖與麥芽糖利用同一種運送方式進入腸上皮細胞", "腸道每小時最多只能吸收約12g葡萄糖", "半乳糖藉由次級主動運輸(secondary active transport)進入腸上皮細胞"], answer: 3, explanation: "Glucose 和 galactose 在腸上皮頂端主要藉SGLT1 (Na-dependent secondary active transport)進入細胞。" },
+            { question: "有關檸檬酸循環(TCA cycle)中酵素與調節的敘述,下列何者錯誤?", options: ["a-Ketoglutarate dehydrogenase complex 受到 succinyl-CoA、NADH 活化", "Citrate synthase 可受到 succinyl-CoA、NADH 抑制", "Isocitrate dehydrogenase 可受到 ADP 活化", "Pyruvate dehydrogenase complex 可受到NADH、acetyl-CoA 抑制"], answer: 0, explanation: "NADH、succinyl-CoA 上升會「抑制」a-ketoglutarate dehydrogenase 而不是活化。" },
+            { question: "五碳糖磷酸途徑(Pentose phosphate pathway, PPP)的主要功能為何?", options: ["和 glycolysis一樣,是提供ATP的主要途徑", "提供 pentose sugar 與 NADPH", "提供 pentose sugar 與 ATP", "利用胺基酸碳骨架合成醣類"], answer: 1, explanation: "PPP的主要功能是提供 NADPH 與 Ribose-5-phosphate。" },
+            { question: "關於 glycogen,下列敘述何者最正確?", options: ["主要由 (1→4) glycosidic bonds 組成", "是完全不分枝的 glucose polymer", "主鏈以 α(1→4) 鍵連結,分枝處為α(1→6) 鍵", "動物肝醣分解時主要直接產生 free glucose"], answer: 2, explanation: "Glycogen 主鏈為a(1→4) 加上a(1→6) branch。Glycogen phosphorylase 主要產生 Glucose-1-phosphate。" },
+            { question: "升糖激素(glucagon)透過下列哪一個第二訊息傳遞者(second messengers),調節肝醣磷酸化酶(glycogen phosphorylase)的活性?", options: ["Calcium ions", "Cyclic guanosine 3', 5'-monophosphate (cGMP)", "Phosphatidylinositol", "Cyclic adenosine 3',5'-monophosphate (cAMP)"], answer: 3, explanation: "Glucagon 結合受體後活化 adenylyl cyclase,使cAMP上升,進而活化 PKA 磷酸化並啟動肝醣分解。" },
+            
+            { question: "當肝組織中 ATP/ADP比值上升時,下列何者會增加?", options: ["肝醣(glycogen)的水解", "AMP 的濃度", "糖解作用(glycolysis)", "糖質新生作用(gluconeogenesis)"], answer: 3, explanation: "ATP/ADP比值上升代表細胞能量過多,此時會減少產能的糖解作用與肝醣水解,並透過糖質新生將多餘能量轉換為糖原儲存。" },
+            { question: "有關肝醣合成酶(glycogen synthase)參與肝醣合成之敘述,下列何者正確?", options: ["此酵素被磷酸化後可被活化", "此酵素只存在於肝臟", "利用 glucose-6-phosphate 做為葡萄糖單元的供給者", "將葡萄糖殘基以α(1→4) 鍵結至肝醣鏈(glycogen chain)之非還原端"], answer: 3, explanation: "肝醣合成酶被「去磷酸化」後增加活性;利用的原料為 UDP-glucose;負責將糖基以 α(1→4) 鍵結轉移到非還原端。" },
+            { question: "在肝臟的肝醣合成(glycogenesis)過程中,葡萄糖被轉換成 glucose-6-phosphate,主要是透過何種酵素的作用?", options: ["glucokinase", "hexokinase", "phosphoglucomutase", "phosphorylase"], answer: 0, explanation: "Glucokinase 主要存在肝臟與胰臟β細胞,Km值較高,在飯後血糖升高時啟動將大量葡萄糖轉化為 G6P 合成肝醣儲存。" },
+            { question: "有關原發性乳糖不耐症(primary lactose intolerance)的敘述,下列何者錯誤?", options: ["於小腸中製造的乳糖酶量不足", "因對乳糖抗原過敏所致", "可替代性攝取優格、優酪乳等發酵乳製品", "大量攝取含乳糖之食品會導致腹瀉"], answer: 1, explanation: "乳糖不耐症屬於「消化吸收不良」的酵素缺乏問題,完全不涉及免疫系統的抗原過敏反應。" },
+            { question: "關於革蘭氏陰性菌細胞壁上的脂多醣(lipopolysaccharide; LPS) 構造與功能,下列敘述何者正確?", options: ["脂多醣構造主要由兩大區域組成:核心區與脂質 A", "引起宿主毒性與免疫反應的主要區域為脂質 A(lipid A)", "脂質 A含有兩個D-葡萄糖胺,並以α-1,4-糖苷鍵相互鏈結", "改變脂肪酸鏈的結構並不會影響其毒性"], answer: 1, explanation: "脂質 A包含兩個D-葡萄糖胺以 β-1,6-糖苷鍵鏈結。改變脂肪酸鏈的結構會影響其毒性。" },
+            { question: "下列關於 disaccharides 的敘述,何者正確?", options: ["雙醣是由3個以上的單醣分子所組成", "乳糖是由葡萄糖與果糖結合而成", "麥芽糖是由2個葡萄糖分子經 α-1,4-glycosidic bond 結合形成", "蔗糖具有游離的 hemiacetal end,因此屬於有 reducing end 的glycan"], answer: 2, explanation: "依照生化常理麥芽糖為兩個葡萄糖經α-1,4鍵結。" },
+            { question: "糖質新生作用主要在肝臟與腎皮質中進行,但是卻無法在肌肉進行,主要是因為肌肉缺乏下列何種酵素?", options: ["果糖-1,6-二磷酸水解酶", "葡萄糖-6-磷酸水解酶", "己糖激酶", "丙酮酸激酶"], answer: 1, explanation: "肌肉缺乏葡萄糖-6-磷酸水解酶，因此無法將醣質新生最後一步轉為游離葡萄糖。" },
+            { question: "每分子葡萄糖從醣解到檸檬酸循環代謝結束時,總共會產生多少分子的NADH 及FADH2?", options: ["4", "6", "10", "12"], answer: 2, explanation: "糖解2NADH + 丙酮酸氧化2NADH + TCA 循環6 NADH + 2 FADH2 = 10 NADH + 2 FADH2 (原題庫答案指10)。" },
+            { question: "單醣中,若兩個糖僅在單一對掌碳原子的構型上有所不同,這類醣類被稱為?", options: ["差向異構物(Epimers)", "對映異構物 (Enantiomers)", "異頭物(Anomers)", "結構異構物 (Structural isomers)"], answer: 0, explanation: "結構僅在單一碳原子周圍構型不同的糖對稱為差向異構物。" },
+            { question: "在醣蛋白(Glycoproteins)中,醣類與蛋白質形成N-醣苷鍵(N-glycosidic linkage)時,參與鍵結的蛋白質胺基酸殘基通常為?", options: ["絲胺酸(Serine)", "天門冬醯胺(Asparagine)", "蘇胺酸(Threonine)", "離胺酸(Lysine)"], answer: 1, explanation: "參與N-醣苷鍵的胺基酸殘基為天門冬醯胺(Asparagine)。" },
+            
+            { question: "下列關於肝臟與胰臟細胞中的葡萄糖激酶(Glucokinase / Hexokinase IV)之敘述,何者正確?", options: ["其對葡萄糖的Km值很低,在正常濃度下容易飽和", "會受到葡萄糖-6-磷酸的強烈變構抑制", "僅存在於肝細胞與胰臟島細胞中", "在飢餓或低血糖時其表現量會上升"], answer: 2, explanation: "葡萄糖激酶僅存在於肝細胞與胰臟細胞中,其Km值較高,且不受葡萄糖-6-磷酸抑制。" },
+            { question: "關於單醣(Monosaccharides)的化學結構與立體異構敘述,下列何者最為正確?", options: ["D-葡萄糖與D-半乳糖在C-2 位置構型不同,互為對映異構物", "葡萄糖形成環狀半縮醛時,C-1碳原子轉變為非對稱異頭碳,進而產生 alpha 與 beta 兩種異頭物", "人體與動物體內能被酵素利用代謝的單醣,絕大多數屬於L-型", "果糖為六碳醛醣,具備強烈的還原性"], answer: 1, explanation: "葡萄糖由鏈狀變為環狀結構時,C-1上的醛基羰基碳轉變為全新的對稱/對映中心,稱為異頭碳(Anomeric carbon)。羥基朝下者稱為 alpha,朝上者稱為beta,兩者互為異頭物。" },
+            { question: "雙醣與多醣是由單醣透過糖苷鍵(Glycosidic bond)縮合而成。下列關於常見醣類鏈結方式與化學性質的敘述,何者最為正確?", options: ["蔗糖由葡萄糖與果糖經 alpha-1,4-糖苷鍵結合,屬於還原糖", "麥芽糖由兩分子葡萄糖經 alpha-1,4-糖苷鍵結合,不具還原性", "糖原(Glycogen)與澱粉(Starch)的主鏈均由 alpha-1,4-糖苷鍵連結,分支點則為 alpha-1,6-糖苷鍵", "纖維素由葡萄糖經 alpha-1,4-糖苷鍵連結,可被單胃動物的消化酵素輕鬆水解"], answer: 2, explanation: "動物體內的糖原與植物的支鏈澱粉,其直鏈主鏈均由 alpha-1,4-糖苷鍵形成,而在分支處則透過 alpha-1,6-糖苷鍵連接。" },
+            { question: "糖解作用(Glycolysis)是細胞擷取葡萄糖能量的主要途徑。下列敘述何者最為正確?", options: ["PFK-1催化葡萄糖轉變為葡萄糖-6-磷酸,為第一步限速反應", "高濃度的ATP 與檸檬酸會別構激活 PFK-1", "果糖-2,6-二磷酸(F-2, 6-BP)是PFK-1 最強烈的別構激活劑", "糖解作用整個過程中均不需要消耗任何ATP"], answer: 2, explanation: "胰島素誘導生成的F-2,6-BP是PFK-1 最強效的別構激活劑,能顯著克服 ATP的抑制作用,促進糖解進行。" },
+            { question: "臨床上進行D-木醣(D-xylose)吸收試驗的主要診斷目的為何?", options: ["評估胰臟外分泌消化酵素的分泌功能", "檢測小腸前段(近端小腸)黏膜的吸收功能", "診斷動物是否患有糖尿病或胰島素抵抗", "評估肝臟糖質新生的代謝能力"], answer: 1, explanation: "D-木醣為一種五碳單醣,不需經過胰臟消化酵素的分解即可直接由小腸前段黏膜吸收,若濃度偏低可專一性診斷小腸吸收不良。" },
+            { question: "在犬貓糖尿病與血糖調控診斷中,血清果糖胺(Fructosamine)濃度主要反映檢驗前多久時間內的平均血糖濃度?", options: ["檢驗當下即時的血糖濃度", "檢驗前1至3天", "檢驗前2至3週", "檢驗前3至4個月"], answer: 2, explanation: "血清果糖胺是葡萄糖與血清蛋白質結合的產物,白蛋白質在犬貓體內的半衰期約為2~3週,因此能穩定反映過去2至3週內的平均血糖狀況。" },
+            { question: "糖解作用(glycolysis)過程中,第一個被磷酸化(phosphorylation)的產物為何?", options: ["glucose 1-phosphate", "glucose 6-phosphate", "glycerol 1-phosphate", "glycerol 3-phosphate"], answer: 1, explanation: "糖解作用的第一步,是將葡萄糖磷酸化,生成葡萄糖-6-磷酸(glucose 6-phosphate, G6P),並消耗一個ATP。" },
+            { question: "胰島素(insulin)透過下列何種方式活化肝醣合成酶(glycogen synthase)?", options: ["腺核苷酸化(adenylylation)", "磷酸化(phosphorylation)", "去腺核苷酸化(deadenylylation)", "去磷酸化(dephosphorylation)"], answer: 3, explanation: "肝醣合成酶在去磷酸化時通常較活躍,因此胰島素透過相關訊息傳遞,促進其去磷酸化與活化。" },
+            { question: "在糖解作用過程合成之ATP,經由何種反應生成?", options: ["氧化(oxidation)", "受質層次磷酸化(substrate level phosphorylation)", "還原(reduction)", "氧化磷酸化(oxidative phosphorylation)"], answer: 1, explanation: "受質層次磷酸化是將代謝物上的磷酸基直接轉移給ADP,生成ATP。糖解作用有兩個步驟使用這種方式。" },
+            
+            { question: "當細胞處於何種滲透壓濃度的溶液中時,水分子會大量流入細胞內,導致細胞膨脹甚至脹破(Lysis)?", options: ["等張溶液(Isotonic solution)", "高張溶液(Hypertonic solution)", "低張溶液(Hypotonic solution)", "等電位溶液(Isoelectric solution)"], answer: 2, explanation: "當細胞置於低張溶液時,外圍水分子會由濃度低處向細胞內移動,導致細胞膨脹並脹破。" },
+            { question: "糖解作用(glycolysis)和β-氧化作用(β-oxidation)產生何種分子進入三羧酸循環(TCA cycle)?", options: ["乙醯輔酶A(acetyl-CoA)", "葡萄糖6磷酸(glucose-6-phosphate)", "β-烴基丁酸輔酶A (β-hydroxybutyryl CoA)", "丙酮酸(pyruvic acid)"], answer: 0, explanation: "糖解作用與β-氧化作用的產物最終都會轉換成「乙醯輔酶A」,這是醣類與脂質代謝的共同終點,再進入檸檬酸循環。" },
+            { question: "下列何者為六碳酮糖?", options: ["L-葡萄糖(L-glucose)", "D-果糖(D-fructose)", "D-半乳糖(D-galactose)", "D-麥芽糖(D-maltose)"], answer: 1, explanation: "果糖為6個碳的單醣,且其官能基酮基部位於C2位置,因此屬於典型的六碳酮糖(Ketohexose)。" },
+            { question: "在進行蛋白質 SDS-PAGE時,SDS (Sodium Dodecyl Sulfate)主要發揮什麼關鍵作用?", options: ["使蛋白質帶均勻負電荷並消除電荷效應", "作為電泳緩衝液以維持恆定pH值", "結合膠體內部以加速電泳運行速度", "破壞雙硫鍵以完全變性蛋白質"], answer: 0, explanation: "SDS是一種陰離子去污劑,能結合蛋白質並掩蓋其原本的電荷,使蛋白質均勻帶負電荷,移動速率僅取決於分子量。" },
+            { question: "在台灣的禽流感疫情監測中,高病原性禽流感(HPAI)主要由A型流感病毒引起。下列敘述何者最為正確?", options: ["台灣常見高病原性禽流感主要為H5N1與H5N2亞型", "台灣常見高病原性禽流感主要為H7N9與H9N2亞型", "台灣常見高病原性禽流感主要為H1N1與H3N2亞型", "台灣常見高病原性禽流感主要為B型流感病毒亞型"], answer: 0, explanation: "台灣高病原性禽流感主要由H5亞型病毒引起,其中H5N1與H5N2為最具代表性且常見的病毒。" },
+            { question: "Cholesterol 在 animal cell membrane 中的主要功能之一是什麼?", options: ["儲存遺傳訊息", "調節 membrane fluidity", "催化 glycolysis", "分解 protein"], answer: 1, explanation: "Cholesterol 會插在 phospholipids (磷脂)之間,主要功能之一就是穩定並調節膜的流動性。" },
+            { question: "酮體(ketone bodies)過多顯示什麼?", options: ["蛋白質攝取不足", "過量攝取糖分", "心臟衰竭", "長期飢餓或糖尿病"], answer: 3, explanation: "碳水化合物攝取不足(如長期飢餓/糖尿病)會導致身體分解脂肪以獲取能量,產生酮體作為中間代謝物。" },
+            { question: "下列哪些酵素參與糖解作用過程中的不可逆過程?", options: ["己糖激酶、磷酸果糖激酶-1、丙酮酸激酶", "己糖激酶、烯醇化酶、磷酸甘油酸激酶", "六角形激酶、丙酮酸激酶、磷酸果糖激酶-1、磷酸丙糖異構酶", "烯醇化酶、磷酸甘油酸變位酶、丙酮酸激酶"], answer: 0, explanation: "此三種激酶負責催化糖解作用的三個不可逆限速步驟。" },
+            { question: "長鏈脂肪酸進入粒線體基質進行β-氧化時,需透過肉鹼(Carnitine)穿梭系統。下列有關敘述何者錯誤?", options: ["肉鹼棕櫚醯轉移酶(CPTI)位於粒線體外膜", "丙二醯輔酶A (Malonyl-CoA)會抑制CPTI的活性", "肉鹼棕櫚醯轉移酶II (CPT II)位於粒線体内膜", "CPTI 會被高濃度的胰島素直接變構活化以加速燃燒脂肪酸"], answer: 3, explanation: "胰島素代表高血糖與飽食狀態,會促進脂肪酸合成並藉由提高 Malonyl-CoA來「抑制」CPTI,因此高胰島素不會活化CPTI。" },
+            
+            { question: "當犬隻出現嚴重肝細胞急性壞死或損害時,血液生化檢驗中半衰期較短且具備高度肝細胞特異性的指標酵素為何?", options: ["鹼性磷酸酶(ALP)", "血清肌酸激酶(CK)", "丙胺酸轉胺酶(ALT)", "y-麩胺醯轉移酶(GGT)"], answer: 2, explanation: "ALT在犬貓的細胞質中含量豐富,是評估肝細胞急性破壞與壞死最具特異性的血清生化指標。" },
+            { question: "下列何者為腸道和呼吸道的上皮內襯(epithelial lining)分泌物中最主要存在的免疫球蛋白?", options: ["IgD", "IgG", "IgA", "IgE"], answer: 2, explanation: "腸道、呼吸道等黏膜上皮分泌物中,存在最主要的抗體就是分泌型 IgA (Secretory IgA, sIgA)。" },
+            { question: "下列何種抗氧化物在粒線體內膜參與電子傳遞?", options: ["硫辛酸(lipoic acid)", "抗壞血酸(ascorbic acid)", "輔酶Q(coenzyme Q)", "生育醌(tocopherol quinone)"], answer: 2, explanation: "輔酶Q是存在於粒線體內膜的脂溶性抗氧化物,主要在電子傳遞鏈中扮演電子載體,同時能清除自由基。" },
+            { question: "一隻犬因飲水不足及水分大量流失而出現高血鈉。當細胞外液滲透壓明顯升高時,細胞最可能發生何種變化?", options: ["水分由細胞內移向細胞外,使細胞皺縮。", "水分進入細胞,使細胞膨脹。", "鈉離子完全停止跨膜移動。", "細胞內外滲透壓差異不影響水分移動。"], answer: 0, explanation: "高血鈉會提高細胞外液的有效滲透壓,使水分由細胞內移向細胞外,造成細胞脫水與皺縮。" },
+            { question: "某細胞需要大量合成類固醇,並具有處理脂質及進行解讀反應的功能。此細胞內下列何種胞器可能較發達?", options: ["粗糙內質網(RER)", "平滑內質網(SER)", "高基氏體(Golgi apparatus)", "溶小體(Lysosome)"], answer: 1, explanation: "SER主要負責脂類物質的合成及其他細胞內酵素的處理。在分泌類固醇的細胞中,負責類固醇的合成與解毒反應。" },
+            { question: "下列有關粒線體氧化磷酸化及化學滲透假說的敘述,何者錯誤?", options: ["電子傳遞鏈運作時,會將質子(H+)由粒線體基質幫浦至膜間隙", "質子動力勢是驅動ATP合成酶合成ATP的主要能量來源", "去偶合劑(如DNP)會破壞質子梯度,導致電子傳遞停止並抑制氧氣消耗", "複合體 II 參與檸檬酸循環,同時也是電子傳遞鏈的一部份,但它不會幫浦質子跨膜"], answer: 2, explanation: "去偶合劑不會抑制電子傳遞鏈,反而因為解除了質子濃度的阻力,使電子傳遞鏈以極高速度運轉,氧氣消耗量會顯著增加(但無法合成ATP)。" },
+            { question: "有關水分子的敘述,下列何者最為適當?", options: ["水分子的電荷分布均勻,故為非極性分子", "一個水分子最多可形成4個氫鍵,因其能同時接受2個電子並提供2個電子", "氫鍵的解離能大於氧-氫共價鍵的解離能", "雙極性分子與水混合時,非極性基團會朝外與水分子結合"], answer: 1, explanation: "水分子為極性分子。一個水分子可同時接受2個電子並提供2個電子,因此最多可形成4個氫鍵。" },
+            { question: "有關原核生物與真核生物之比較,下列敘述何者正確?", options: ["原核生物的能量代謝主要在粒線體進行氧化磷酸化", "原核生物的DNA由組織蛋白緊密纏繞後儲存於細胞核中", "真核生物之細胞分裂方式為簡單分裂,不涉及紡錘絲", "真核細胞具有由膜構造形成的胞器,如粒線體、內質網及高基氏體等"], answer: 3, explanation: "原核生物沒有粒線體,無核膜包覆;真核生物具有膜構造的胞器(粒線體、內質網等)。" },
+            { question: "一分子葡萄糖經醣解作用於細胞質中代謝,下列敘述何者最適當?", options: ["淨反應可產生4個ATP及2個NADH", "六碳的葡萄糖最終轉變為2個三碳的丙酮酸", "醣解作用全程皆需消耗氧氣方能進行", "磷酸果糖激酶-1(PFK-1)為醣解作用中可逆的限速步驟"], answer: 1, explanation: "葡萄糖(六碳)經醣解作用分解為2個丙酮酸(三碳)。淨反應產生2個ATP與2個NADH,且不需要氧氣即可進行,PFK-1為不可逆步驟。" },
+            { question: "一隻12歲已結紮公犬的ALT 活性值為150 IU/L,AST活性值 400 IU/L,CK活性值1,500 IU/L,最可能的判讀為:", options: ["骨骼肌損傷", "肝臟損傷", "肌肉及肝臟同時嚴重損傷", "脂肪肝"], answer: 0, explanation: "CK(肌酸激酶)是骨骼肌和心肌受損最敏感、最特異的指標。1,500 IU/L 屬於顯著暴增,指出存在嚴重骨骼肌損傷。肌肉細胞受損時也會釋放 AST與微量 ALT,因此並非肝臟嚴重損傷。" },
+            { question: "下列有關於酮體的敘述,何者最為適當?", options: ["尿液試條紙的酮體是測量  -hydroxybutyrate", "尿液試條紙的酮體是測量 acetoacetic acid", "若尿液不夠新鮮可能會造成酮體偽陽性", "酮體造成的酸血症為分泌型代謝性酸中毒"], answer: 1, explanation: "市售尿液試紙的酮體檢測區是利用硝普鈉反應,對乙醯乙酸(Acetoacetic acid)極度敏感,對β-羥基丁酸完全不反應。" },
+            { question: "有關尿路結石之區分方法與結果,下列敘述何者正確?", options: ["混濁尿液以60℃加熱後會變澄清透明者,最有可能是胺基酸結石", "混濁尿液以60℃加熱後會變澄清透明者,最有可能是尿酸鹽結石", "混濁尿液加熱後不變,再加入稀醋酸即變透明者,最有可能是尿酸鹽結石", "混濁尿液加熱後不變,再加入稀醋酸即變透明者,最有可能是草酸鹽結石"], answer: 1, explanation: "尿酸鹽結晶對溫度敏感,稍微加熱到60℃ 結晶就會完全溶解。加酸變透明的是磷酸鹽/碳酸鹽;加熱加酸皆不變的則是草酸鈣。" }
+        ];
+
+        const QUIZ_SIZE = 20;
+        let selectedQuestions = [];
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let selectedOptionIndex = null;
+        let hasAnswered = false;
+
+        // DOM Elements
+        const quizContainer = document.getElementById('quiz-container');
+        const resultContainer = document.getElementById('result-container');
+        const questionProgress = document.getElementById('question-progress');
+        const scoreKeeper = document.getElementById('score-keeper');
+        const questionText = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const explanationBox = document.getElementById('explanation-box');
+        const explanationText = document.getElementById('explanation-text');
+        const submitBtn = document.getElementById('submit-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const finalScoreNumber = document.getElementById('final-score-number');
+
+        function startQuiz() {
+            // Shuffle the entire raw pool
+            const shuffled = [...rawQuestions].sort(() => 0.5 - Math.random());
+            // Take up to 20 questions
+            selectedQuestions = shuffled.slice(0, Math.min(QUIZ_SIZE, shuffled.length));
+            
+            currentQuestionIndex = 0;
+            score = 0;
+            
+            quizContainer.classList.remove('hidden');
+            resultContainer.classList.add('hidden');
+            
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            hasAnswered = false;
+            selectedOptionIndex = null;
+            
+            submitBtn.disabled = true;
+            submitBtn.classList.remove('hidden');
+            nextBtn.classList.add('hidden');
+            explanationBox.classList.add('hidden');
+            
+            const currentQ = selectedQuestions[currentQuestionIndex];
+            
+            // Update Headers
+            questionProgress.innerText = `題目：${currentQuestionIndex + 1} / ${selectedQuestions.length}`;
+            scoreKeeper.innerText = `得分：${score}`;
+            questionText.innerText = currentQ.question;
+            
+            // Render Options (With slight shuffling while keeping logic intact)
+            let optionsObj = currentQ.options.map((text, idx) => ({ text, originalIdx: idx }));
+            optionsObj.sort(() => 0.5 - Math.random());
+            
+            optionsContainer.innerHTML = '';
+            optionsObj.forEach((opt) => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn w-full text-left bg-white text-gray-800 font-medium py-4 px-6 rounded-lg shadow-sm block';
+                btn.innerHTML = `<span class="inline-block w-8 h-8 text-center leading-8 bg-gray-100 text-gray-500 rounded-full mr-3 font-bold text-sm pointer-events-none">${String.fromCharCode(65 + optionsObj.indexOf(opt))}</span>${opt.text}`;
+                btn.dataset.idx = opt.originalIdx;
+                
+                btn.onclick = () => selectOption(btn, opt.originalIdx);
+                optionsContainer.appendChild(btn);
+            });
+        }
+
+        function selectOption(element, originalIdx) {
+            if (hasAnswered) return;
+            
+            document.querySelectorAll('.option-btn').forEach(btn => {
+                btn.classList.remove('selected');
+            });
+            element.classList.add('selected');
+            selectedOptionIndex = originalIdx;
+            
+            submitBtn.disabled = false;
+        }
+
+        function checkAnswer() {
+            if (selectedOptionIndex === null || hasAnswered) return;
+            hasAnswered = true;
+            
+            const currentQ = selectedQuestions[currentQuestionIndex];
+            const isCorrect = (selectedOptionIndex === currentQ.answer);
+            
+            if (isCorrect) {
+                // Assuming 100 points total
+                const pointsPerQuestion = 100 / selectedQuestions.length;
+                score += pointsPerQuestion;
+                scoreKeeper.innerText = `得分：${Math.round(score)}`;
+            }
+            
+            // Highlight options
+            document.querySelectorAll('.option-btn').forEach(btn => {
+                const idx = parseInt(btn.dataset.idx);
+                if (idx === currentQ.answer) {
+                    btn.classList.add('correct');
+                    btn.classList.remove('selected');
+                } else if (idx === selectedOptionIndex && !isCorrect) {
+                    btn.classList.add('incorrect');
+                }
+                btn.style.cursor = 'default';
+            });
+            
+            // Show explanation
+            explanationText.innerText = currentQ.explanation;
+            explanationBox.classList.remove('hidden');
+            
+            // Toggle buttons
+            submitBtn.classList.add('hidden');
+            nextBtn.classList.remove('hidden');
+            
+            if (currentQuestionIndex >= selectedQuestions.length - 1) {
+                nextBtn.innerText = "查看測驗結果";
+                nextBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+                nextBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+            } else {
+                nextBtn.innerText = "下一題";
+            }
+        }
+
+        function nextQuestion() {
+            if (currentQuestionIndex >= selectedQuestions.length - 1) {
+                showResult();
+            } else {
+                currentQuestionIndex++;
+                loadQuestion();
+            }
+        }
+
+        function showResult() {
+            quizContainer.classList.add('hidden');
+            resultContainer.classList.remove('hidden');
+            finalScoreNumber.innerText = Math.round(score);
+        }
+
+        // Initialize App
+        window.onload = startQuiz;
+    </script>
+</body>
+</html>
